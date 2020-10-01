@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Lab 4</title>
+
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+        integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+        crossorigin=""/>
+
+        <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
+        integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
+        crossorigin=""></script>
+
+        <script type="text/javascript" src="data3.js"></script>
+
+        <script type="text/javascript" src="data2.js"></script>
+
+    </head>
+
+     <h1 class="title" leaflet-browser-print-content>Population Density and Affordable Housing Locations in Chicago</h1>
+
+    <style type="text/css">
+    html, body { margin: 0; padding: 0; height: 100%; }
+    #map { min-height: 100%; }
+    </style>
+
+    <style>
+/* Optional: adjust the values below to change the appearance of the legend */
+.legend {
+  padding: 6px 8px;
+  line-height: 18px;
+  background: rgba(255,255,255,0.9);
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  border-radius: 5px;
+}
+
+/* Optional: adjust the values below to change the appearance of the legend color boxes */
+.legend i {
+  width: 18px;
+  height: 18px;
+  float: left;
+  margin-right: 8px;
+  opacity: 0.7;
+}
+</style>
+
+    <body>
+        <div id="map"></div>
+
+        <script type="text/javascript">
+
+        //<h1 style="font-size:60px;">Chicago</h1>
+
+          var map = L.map('map', {
+              center: [41.8108441,-87.7246101],
+              zoom: 10
+          });
+
+        var canvas = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
+           attribution: 'Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL.',
+           maxZoom: 11,
+           minZoom: 5
+         }).addTo(map);
+
+         function getColor(value) {
+    return value > 441327 ? '#034e7b':
+           value > 346927  ? '#0570b0':
+           value > 34439  ? '#3690c0':
+           value > 23004  ? '#74a9cf':
+           value > 16427  ? '#a6bddb':
+           value > 10917  ? '#d0d1e6':
+           value > 5388  ? '#f1eef6':
+                         '#fff7fb';
+}
+
+          function style(feature){
+          return {
+            fillColor: getColor(feature.properties.Pop_SqMile),   // pop_den is the field name for the population density data
+            weight: 2,
+            opacity: 1,
+            color: 'gray',
+            fillOpacity: 0.9,
+            dashArray: '5 5'
+
+
+
+
+};
+}
+
+
+         var pop_den = L.geoJson(data, {style:style}).addTo(map);
+
+         var afHouse = L.geoJson(data2, {style:style}).addTo(map);
+
+         var legend = L.control({position: 'bottomright'}); // Try the other three corners if you like.
+
+            legend.onAdd = function (map) {
+
+                var div = L.DomUtil.create('div', 'legend'),
+                    grades = [0, 5388, 10917, 16427, 23004, 34439, 346927, 441327]; // The break values to define the intervals of population, note we begin from 0 here
+
+                div.innerHTML = '<b>Population Density <br> 2011 <br></b>'; // The legend title (HTML-based), in this case it's Population Density 2011
+
+                // Loop through our the classes and generate a label with a color box for each interval.
+                // If you are creating a choropleth map, you DO NOT need to change lines below.
+                for (var i = 0; i < grades.length; i++) {
+                    div.innerHTML +=
+                    '<i style="background:' + getColor(grades[i] + 1) + '"></i>' +
+                    grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+                }
+
+                return div;
+            };
+
+            legend.addTo(map);
+
+            var basemaps = {
+              "Light Canvas": canvas
+
+};
+
+            var overlaymaps = {
+              "Population Density": pop_den,
+              "Affordable Housing Units": afHouse
+};
+            L.control.layers(basemaps, overlaymaps).addTo(map);
+
+            // Removing the legend when the layer is removed
+map.on('overlayremove', function(eventLayer){
+  if (eventLayer.name == 'Population Density'){ // We use the key/display name to refer to the layer
+    map.removeControl(legend); // legend is the variable name of the layer legend
+  }
+});
+
+// Adding the legend when the layer is added
+map.on('overlayadd', function(eventLayer){
+  if (eventLayer.name == 'Population Density'){
+    legend.addTo(map);
+  }
+});
+
+
+        </script>
+   </body>
+</html>
